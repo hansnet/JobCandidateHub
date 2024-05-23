@@ -43,28 +43,55 @@ namespace JobCandidateHub.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CandidateDto value)
         {
-            var existingUser = await _candidateRepository.GetAllCandidatesAsync();
-            if (existingUser.Any(u => u.Email == value.Email))
+            var existingCandidate = await _candidateRepository.GetCandidateByEmailAsync(value.Email);
+
+            if (existingCandidate != null)
             {
-                return BadRequest(new { message = "Email already exists." });
+                //Keep the existing Id so as to be able to update the rest of the details
+                value.Id = existingCandidate.Id;
+
+                // Update existing candidate details if email exists
+                _mapper.Map(value, existingCandidate);
+
+                await _candidateRepository.UpdateCandidateAsync(existingCandidate);
+
+                return Ok(existingCandidate);
             }
 
+            // Create a new candidate if email doesn't exist
             var candidate = _mapper.Map<Candidate>(value);
             candidate = await _candidateRepository.AddCandidateAsync(candidate);
 
-            return CreatedAtAction("Get", new { id = candidate.Id });
+            return CreatedAtAction("Get", new { id = candidate.Id }, candidate);
+
         }
 
         // PUT api/<CandidatesController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> Put(string id, [FromBody] CandidateDto value)
         {
+            if (id != value.Id)
+            {
+                return BadRequest(new { message = "Update failed, candidate not found" });
+            }
+
+            var product = _mapper.Map<Candidate>(value);
+            await _candidateRepository.UpdateCandidateAsync(product);
+
+            return NoContent();
         }
 
         // DELETE api/<CandidatesController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
+            var candidate = await _candidateRepository.GetCandidateByIdAsync(id);
+            if (candidate is null)
+                return NotFound(new { message = "Candidate not found" });
+
+            await _candidateRepository.DeleteCandidateAsync(id);
+
+            return NoContent();
         }
     }
 }

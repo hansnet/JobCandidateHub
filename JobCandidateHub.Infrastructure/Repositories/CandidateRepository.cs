@@ -24,9 +24,14 @@ namespace JobCandidateHub.Infrastructure.Repositories
             return candidate;
         }
 
-        public Task DeleteCandidateAsync(string id)
+        public async Task DeleteCandidateAsync(string id)
         {
-            throw new NotImplementedException();
+            var candidate = await _context.Candidates.FindAsync(id);
+            if (candidate == null)
+                throw new ArgumentException("Candidate not found", nameof(candidate));
+
+            _context.Candidates.Remove(candidate);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Candidate>> GetAllCandidatesAsync()
@@ -34,14 +39,22 @@ namespace JobCandidateHub.Infrastructure.Repositories
             return await _context.Candidates.ToListAsync();
         }
 
-        public Task<Candidate> GetCandidateByIdAsync(string id)
+        public async Task<Candidate?> GetCandidateByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            return await _context.Candidates.FindAsync(id);
         }
 
-        public Task<Candidate> UpdateCandidateAsync(Candidate candidate)
+        public async Task<Candidate?> GetCandidateByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            return await _context.Candidates.FirstOrDefaultAsync(c => c.Email == email);
+        }
+
+        public async Task<Candidate> UpdateCandidateAsync(Candidate candidate)
+        {
+            _context.Entry(candidate).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return candidate;
         }
     }
 }

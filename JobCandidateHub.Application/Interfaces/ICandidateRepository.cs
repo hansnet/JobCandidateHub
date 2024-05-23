@@ -13,6 +13,8 @@ namespace JobCandidateHub.Application.Interfaces
 
         Task<Candidate> GetCandidateByIdAsync(string id);
 
+        Task<Candidate> GetCandidateByEmailAsync(string email);
+
         Task<Candidate> AddCandidateAsync(Candidate candidate);
 
         Task<Candidate> UpdateCandidateAsync(Candidate candidate);
